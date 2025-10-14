@@ -1,19 +1,19 @@
 package com.csdl.tourbusbooking.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.csdl.tourbusbooking.entity.Trip;
+import org.springframework.web.bind.annotation.*;
 
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.sql.DataSource;
-import java.sql.Connection;
+import java.util.List;
 
 @RestController
+@RequestMapping("/api/trip")
 public class TripController {
-    @GetMapping("api/trip")
-    public String Trip() {
-        return "Hello World";
-    }
+    @GetMapping
+    public List<Trip> getAllTrip() {}
+    @GetMapping("/{id}")
+    public Trip getTrips(@PathVariable int id) {}
+    @PostMapping
+    public String addTrip(@RequestBody Trip trip) {}
+    @PutMapping("/{id}")
+    public String updateTrip(@PathVariable int id, @RequestBody Trip trip) {}
 }
