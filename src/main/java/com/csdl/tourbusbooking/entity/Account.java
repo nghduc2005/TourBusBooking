@@ -14,7 +14,7 @@ public class Account {
     private String role;
     private String[] order_history;
     private String account_id;
-    Account (RegisterRequest request) {
+    public Account(RegisterRequest request) {
         this.fullname = request.getFullname();
         this.address = request.getAddress();
         this.phone = request.getPhone();
