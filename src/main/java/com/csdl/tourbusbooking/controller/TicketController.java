@@ -1,5 +1,4 @@
 package com.csdl.tourbusbooking.controller;
-import com.csdl.tourbusbooking.entity.Ticket;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
