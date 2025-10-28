@@ -13,7 +13,7 @@ public class AuthSession implements HandlerInterceptor {
         HttpSession session = request.getSession(false); //không tạo mới nếu không có
         String path = request.getRequestURI();
         // Cho phép các API public (bổ sung sau)
-        if (path.startsWith("/login") || path.startsWith("/register")) {
+        if (path.endsWith("/login") || path.endsWith("/register")) {
             return true;
         }
         //Chưa có session khi truy cập tài nguyên -> chặn

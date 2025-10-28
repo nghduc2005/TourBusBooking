@@ -1,11 +1,11 @@
 package com.csdl.tourbusbooking.dto;
 
 import lombok.Data;
+
 @Data
-public class RegisterRequest {
+public class ChangeProfileRequest {
+    private String name;
     private String phone;
     private String address;
-    private String name;
-    private String username;
-    private String password;
+    private String note;
 }

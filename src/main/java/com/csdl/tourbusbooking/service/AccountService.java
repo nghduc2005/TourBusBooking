@@ -1,11 +1,13 @@
 package com.csdl.tourbusbooking.service;
 
 import com.csdl.tourbusbooking.constant.UserConstant;
-import com.csdl.tourbusbooking.dto.RegisterRequest;
+import com.csdl.tourbusbooking.dto.*;
 import com.csdl.tourbusbooking.model.Account;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.BadSqlGrammarException;
@@ -16,10 +18,11 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,15 +55,46 @@ public class AccountService {
             return null; //không tìm thấy
         }
     }
+    public Boolean findAccountById(int id) {
+        String sql = "select username from accounts where account_id= ?";
+        try {
+            String usernameAtDB = jdbcTemplate.queryForObject(sql,String.class, id);
+            return usernameAtDB!=null;
+        } catch (EmptyResultDataAccessException e) {
+            return false; //không tìm thấy
+        }
+    }
+    public Account getProfile(String username) {
+        String sql = "select name, phone, address, role from accounts where username= ?";
+        try{
+            return jdbcTemplate.queryForObject(
+                    sql,
+                    new Object[]{username},
+                    new RowMapper<Account>() {
+                        public Account mapRow(ResultSet rs, int rowNum) throws SQLException {
+                            Account account = new Account();
+                            account.setName(rs.getString("name"));
+                            account.setPhone(rs.getString("phone"));
+                            account.setAddress(rs.getString("address"));
+                            account.setRole(rs.getString("role"));
+                            return account;
+                        }
+                    }
+            );
+        } catch (EmptyResultDataAccessException e) {
+            return null; //không tìm thấy
+        }
+    }
+
     public Boolean createAccount(RegisterRequest request) {
-        String sql = "insert into accounts(username,password, fullname, address, phone, role) values(?," +
+        String sql = "insert into accounts(username,password, name, address, phone, role) values(?," +
                 "?, ?, ?, ?, ?)";
         try{
             jdbcTemplate.update(
                     sql,
                     request.getUsername(),
                     request.getPassword(),
-                    request.getFullname(),
+                    request.getName(),
                     request.getAddress(),
                     request.getPhone(),
                     UserConstant.CUSTOMER_ROLE
@@ -75,24 +109,177 @@ public class AccountService {
             return false;
         }
     }
-
-
-//    public Long register(Account account) {
-//        String sql = "INSERT INTO accounts (username, password, fullname, address, phone, role) " +
-//                "VALUES (?, ?, ?, ?, ?, ?)";
-//        KeyHolder keyHolder = new GeneratedKeyHolder();
-//
-//        jdbcTemplate.update(conn -> {
-//            PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-//            ps.setString(1, account.getUsername());
-//            ps.setString(2, account.getPassword());
-//            ps.setString(3, account.getFullname());
-//            ps.setString(4, account.getAddress());
-//            ps.setString(5, account.getPhone());
-//            ps.setString(6, account.getRole());
-//            return ps;
-//        }, keyHolder);
-//
-//        return keyHolder.getKey().longValue();
-//    }
+    public Boolean changePassword(ChangePasswordRequest request, String username) {
+        String sql =  "update accounts set password = ? where username = ?";
+        String password = request.getPassword();
+        try {
+            int rows = jdbcTemplate.update(sql,password,username);
+            if(rows == 1) {
+                System.out.println("Đổi mật khẩu thành công!");
+                return true;
+            }
+            System.out.println("Không tìm thấy user");
+            return false;
+        } catch (DataIntegrityViolationException e) {
+            //trùng khóa chính/vi phạm khóa ngoại/null tại not null/vượt kích thước định nghĩa
+            System.out.println("Lỗi ràng buộc dữ liệu");
+            return false;
+        } catch (BadSqlGrammarException e) {
+            System.out.println("Sai cú pháp SQL");
+            return false;
+        }
+    }
+    public Boolean changePasswordById(ChangePasswordRequest request, int id) {
+        String sql =  "update accounts set password = ? where account_id = ?";
+        String password = request.getPassword();
+        try {
+            int rows = jdbcTemplate.update(sql,password, id);
+            if(rows == 1) {
+                System.out.println("Đổi mật khẩu thành công!");
+                return true;
+            }
+            System.out.println("Không tìm thấy user");
+            return false;
+        } catch (DataIntegrityViolationException e) {
+            //trùng khóa chính/vi phạm khóa ngoại/null tại not null/vượt kích thước định nghĩa
+            System.out.println("Lỗi ràng buộc dữ liệu");
+            return false;
+        } catch (BadSqlGrammarException e) {
+            System.out.println("Sai cú pháp SQL");
+            return false;
+        }
+    }
+    public Boolean changeProfile(ChangeProfileRequest request, String username) {
+        String sql =  "update accounts set name = ?, phone = ?, address = ?, note = ? where username = ?";
+        String name = request.getName();
+        String phone = request.getPhone();
+        String address = request.getAddress();
+        String note = request.getNote();
+        try {
+            int rows = jdbcTemplate.update(sql,name, phone, address, note,username);
+            if(rows == 1) {
+                System.out.println("Cập nhật thông tin thành công!");
+                return true;
+            }
+            System.out.println("Không tìm thấy user");
+            return false;
+        } catch (DataIntegrityViolationException e) {
+            //trùng khóa chính/vi phạm khóa ngoại/null tại not null/vượt kích thước định nghĩa
+            System.out.println("Lỗi ràng buộc dữ liệu");
+            return false;
+        } catch (BadSqlGrammarException e) {
+            System.out.println("Sai cú pháp SQL");
+            return false;
+        }
+    }
+    public Boolean createAccountAdmin(CreateAccountRequest request) {
+        String sql = "insert into accounts(username,password, name, address, phone, role, note) values(?," +
+                "?, ?, ?, ?, ?, ?)";
+        try{
+            jdbcTemplate.update(
+                    sql,
+                    request.getUsername(),
+                    request.getPassword(),
+                    request.getName(),
+                    request.getAddress(),
+                    request.getPhone(),
+                    request.getRole(),
+                    request.getNote()
+            );
+            return true;
+        } catch (DataIntegrityViolationException e) {
+            //trùng khóa chính/vi phạm khóa ngoại/null tại not null/vượt kích thước định nghĩa
+            System.out.println("Lỗi ràng buộc dữ liệu");
+            return false;
+        } catch (BadSqlGrammarException e) {
+            System.out.println("Sai cú pháp SQL");
+            return false;
+        }
+    }
+    public Boolean editAccountAdmin(ChangeProfileRequest request, int id) {
+        String sql =  "update accounts set name = ?, phone = ?, address = ?, note = ? where account_id = ?";
+        try{
+            jdbcTemplate.update(
+                    sql,
+                    request.getName(),
+                    request.getPhone(),
+                    request.getAddress(),
+                    request.getNote(),
+                    id
+            );
+            return true;
+        } catch (DataIntegrityViolationException e) {
+            //trùng khóa chính/vi phạm khóa ngoại/null tại not null/vượt kích thước định nghĩa
+            System.out.println(e.getMessage());
+            System.out.println("Lỗi ràng buộc dữ liệu");
+            return false;
+        } catch (BadSqlGrammarException e) {
+            System.out.println("Sai cú pháp SQL");
+            return false;
+        }
+    }
+    public Boolean deletedById(int id) {
+        String sql =  "delete from accounts where account_id = ?";
+        try{
+            int rows = jdbcTemplate.update(
+                    sql,
+                    id
+            );
+            if(rows == 1) {
+                return true;
+            }
+            return false;
+        } catch (DataIntegrityViolationException e) {
+            //trùng khóa chính/vi phạm khóa ngoại/null tại not null/vượt kích thước định nghĩa
+            System.out.println(e.getMessage());
+            System.out.println("Lỗi ràng buộc dữ liệu");
+            return false;
+        } catch (BadSqlGrammarException e) {
+            System.out.println("Sai cú pháp SQL");
+            return false;
+        }
+    }
+    public int deleteByIds(List<Long> ids) {
+        String sql = "DELETE FROM accounts WHERE account_id IN (" +
+        //Đổi mỗi phần tử thuộc list thành ?
+        ids
+        .stream().map(id -> "?") //tự động duyệt tuần tự, thay các phần tử thành ?
+        .collect(Collectors.joining(",")) + ")"; //nhặt các kết quả và join để tạo dạng (?, ? ,...,?)
+        try {
+            return jdbcTemplate.update(sql, ids.toArray());
+        } catch (DataIntegrityViolationException e) {
+            //trùng khóa chính/vi phạm khóa ngoại/null tại not null/vượt kích thước định nghĩa
+            System.out.println(e.getMessage());
+            System.out.println("Lỗi ràng buộc dữ liệu");
+            return 0;
+        } catch (BadSqlGrammarException e) {
+            System.out.println("Sai cú pháp SQL");
+            return 0;
+        }
+    }
+    public List<AccountResponse>  getAllAccounts(String username) {
+        String sql = "select account_id, name, address, phone, username, role from accounts where username != ?";
+        try{
+            return jdbcTemplate.query(
+                    sql,
+                    new Object[]{username},
+                    (rs, rowNum) -> {
+                        AccountResponse accountResponse = new AccountResponse();
+                        accountResponse.setAccount_id(rs.getInt("account_id"));
+                        accountResponse.setName(rs.getString("name"));
+                        accountResponse.setAddress(rs.getString("address"));
+                        accountResponse.setPhone(rs.getString("phone"));
+                        accountResponse.setUsername(rs.getString("username"));
+                        accountResponse.setRole(rs.getString("role"));
+                        return accountResponse;
+                    }
+            );
+        } catch (BadSqlGrammarException e) {
+            System.out.println("Sai cú pháp SQL: " + e.getMessage());
+            return Collections.emptyList();
+        } catch (DataAccessException e) {
+            System.out.println("Lỗi truy cập CSDL: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
 }
