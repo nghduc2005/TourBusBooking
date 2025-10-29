@@ -86,6 +86,27 @@ public class AccountService {
         }
     }
 
+    public Account getProfileById(String id) {
+        String sql = "select name, phone, address, role from accounts where account_id= ?";
+        try{
+            return jdbcTemplate.queryForObject(
+                    sql,
+                    new Object[]{id},
+                    new RowMapper<Account>() {
+                        public Account mapRow(ResultSet rs, int rowNum) throws SQLException {
+                            Account account = new Account();
+                            account.setName(rs.getString("name"));
+                            account.setPhone(rs.getString("phone"));
+                            account.setAddress(rs.getString("address"));
+                            account.setRole(rs.getString("role"));
+                            return account;
+                        }
+                    }
+            );
+        } catch (EmptyResultDataAccessException e) {
+            return null; //không tìm thấy
+        }
+    }
     public Boolean createAccount(RegisterRequest request) {
         String sql = "insert into accounts(username,password, name, address, phone, role) values(?," +
                 "?, ?, ?, ?, ?)";

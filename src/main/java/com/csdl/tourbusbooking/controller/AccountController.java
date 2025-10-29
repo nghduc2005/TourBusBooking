@@ -6,12 +6,8 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import javax.swing.text.html.parser.Entity;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.List;
 
 @RestController
@@ -55,6 +51,14 @@ public class AccountController {
     public ResponseEntity<?> getProfile(HttpSession session) {
         String username = (String) session.getAttribute("account");
         Account account =  accountService.getProfile(username);
+        if(account == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy thông tin tài khoản!");
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(account);
+    }
+    @GetMapping("/edit/{id}")
+    public ResponseEntity<?> getProfile(@PathVariable String id) {
+        Account account =  accountService.getProfileById(id);
         if(account == null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy thông tin tài khoản!");
         }
@@ -134,10 +138,4 @@ public class AccountController {
         List<AccountResponse> accountList = accountService.getAllAccounts(username);
         return ResponseEntity.status(HttpStatus.OK).body(accountList);
     }
-//    @GetMapping("/{id}")
-//    public Account getAccounts(@PathVariable int id) {}
-//    @PostMapping
-//    public String addAccount(@RequestBody Account account) {}
-//    @PutMapping("/{id}")
-//    public String updateAccount(@PathVariable int id, @RequestBody Account account) {}
 }

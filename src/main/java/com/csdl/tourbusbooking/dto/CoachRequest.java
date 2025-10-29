@@ -1,7 +1,9 @@
-package com.csdl.tourbusbooking.model;
+package com.csdl.tourbusbooking.dto;
 
-public class Coach {
-    private int coach_id;
+import lombok.Data;
+
+@Data
+public class CoachRequest {
     private String coach_name;
     private String coach_type;
     private int total_seat;
