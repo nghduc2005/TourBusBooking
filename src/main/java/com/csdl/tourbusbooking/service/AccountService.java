@@ -65,7 +65,7 @@ public class AccountService {
         }
     }
     public Account getProfile(String username) {
-        String sql = "select name, phone, address, role from accounts where username= ?";
+        String sql = "select account_id, name, phone, address, role from accounts where username= ?";
         try{
             return jdbcTemplate.queryForObject(
                     sql,
@@ -73,6 +73,7 @@ public class AccountService {
                     new RowMapper<Account>() {
                         public Account mapRow(ResultSet rs, int rowNum) throws SQLException {
                             Account account = new Account();
+                            account.setAccount_id(rs.getInt("account_id"));
                             account.setName(rs.getString("name"));
                             account.setPhone(rs.getString("phone"));
                             account.setAddress(rs.getString("address"));
@@ -204,7 +205,7 @@ public class AccountService {
                     request.getName(),
                     request.getAddress(),
                     request.getPhone(),
-                    request.getRole(),
+                    UserConstant.ADMIN_ROLE,
                     request.getNote()
             );
             return true;

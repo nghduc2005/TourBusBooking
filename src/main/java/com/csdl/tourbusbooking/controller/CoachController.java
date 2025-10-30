@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/coach")
+@RequestMapping("/vehicles")
 public class CoachController {
     @Autowired
     private CoachService coachService;

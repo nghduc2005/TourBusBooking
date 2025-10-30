@@ -112,7 +112,8 @@ public class TripService {
         }
     }
     public List<TripResponse>  getAllTrip() {
-        String sql = "SELECT t.trip_id, t.start_location, t.end_location, t.start_time, t.price, c.status, t.coach_id, c.coach_type, c.total_seat FROM trips t JOIN coachs c ON t.coach_id = c.coach_id";
+        String sql = "SELECT t.trip_id, t.start_location, t.end_location, t.start_time, t.price, t.status, t" +
+                ".coach_id, c.coach_type, c.total_seat FROM trips t JOIN coachs c ON t.coach_id = c.coach_id";
         try{
             return jdbcTemplate.query(
                     sql,
