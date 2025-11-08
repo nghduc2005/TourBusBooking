@@ -19,9 +19,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Service;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,7 +37,7 @@ public class AccountService {
         }
     }
     public Account findAndReturnAccount(String username) {
-        String sql = "select username, password from accounts where username= ?"; //tìm tài khoản đã tồn tại chưa
+        String sql = "select * from accounts where username= ?"; //tìm tài khoản đã tồn tại chưa
         try{
             return jdbcTemplate.queryForObject(
                     sql,
@@ -48,6 +46,11 @@ public class AccountService {
                         Account account = new Account();
                         account.setUsername(rs.getString("username"));
                         account.setPassword(rs.getString("password"));
+                        account.setPhone(rs.getString("phone"));
+                        account.setAddress(rs.getString("address"));
+                        account.setRole(rs.getString("role"));
+                        account.setName(rs.getString("name"));
+                        account.setNote(rs.getString("note"));
                         return account;
                     }
             );
@@ -279,12 +282,14 @@ public class AccountService {
             return 0;
         }
     }
-    public List<AccountResponse>  getAllAccounts(String username) {
-        String sql = "select account_id, name, address, phone, username, role from accounts where username != ?";
+    public  Map<String, Object>  getAllAccounts(String username, int current, int pageSize) {
+        String sql = "select account_id, name, address, phone, username, role from accounts where username != ? " +
+                "limit ? offset ?";
+        String countSQL = "select account_id, name, address, phone, username, role from accounts where username != ?";
         try{
-            return jdbcTemplate.query(
+            List<AccountResponse> accountList = jdbcTemplate.query(
                     sql,
-                    new Object[]{username},
+                    new Object[]{username, pageSize, (current-1)*pageSize},
                     (rs, rowNum) -> {
                         AccountResponse accountResponse = new AccountResponse();
                         accountResponse.setAccount_id(rs.getInt("account_id"));
@@ -296,12 +301,17 @@ public class AccountService {
                         return accountResponse;
                     }
             );
+            int total = jdbcTemplate.queryForObject(countSQL, Integer.class, username);
+            Map<String, Object> map = new HashMap<>();
+            map.put("total", total);
+            map.put("accounts", accountList);
+            return map;
         } catch (BadSqlGrammarException e) {
             System.out.println("Sai cú pháp SQL: " + e.getMessage());
-            return Collections.emptyList();
+            return null;
         } catch (DataAccessException e) {
             System.out.println("Lỗi truy cập CSDL: " + e.getMessage());
-            return Collections.emptyList();
+            return null;
         }
     }
 }

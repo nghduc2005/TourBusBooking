@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/schedules")
@@ -48,8 +49,8 @@ public class TripController {
         }
     }
     @GetMapping
-    public ResponseEntity<?> getAllTrips() {
-        List<TripResponse> tripList = tripService.getAllTrip();
-        return ResponseEntity.status(HttpStatus.OK).body(tripList);
+    public ResponseEntity<?> getAllTrips(@RequestParam int current, @RequestParam int pageSize) {
+        Map<String, Object> daoResponse = tripService.getAllTrip(current, pageSize);
+        return ResponseEntity.status(HttpStatus.OK).body(daoResponse);
     }
 }

@@ -18,7 +18,9 @@ import org.springframework.stereotype.Service;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -142,12 +144,13 @@ public class CoachService {
         }
     }
 
-    public List<CoachResponse>  getAllCoachs() {
-        String sql = "select coach_id, coach_name, coach_type, total_seat, status from coachs";
+    public Map<String, Object>  getAllCoachs(int current, int pageSize) {
+        String sql = "select coach_id, coach_name, coach_type, total_seat, status from coachs limit ? offset ?";
+        String countSQL = "select coach_id, coach_name, coach_type, total_seat, status from coachs";
         try{
-            return jdbcTemplate.query(
+            List<CoachResponse> coachs = jdbcTemplate.query(
                     sql,
-                    new Object[]{},
+                    new Object[]{pageSize, (current-1)*pageSize},
                     (rs, rowNum) -> {
                         CoachResponse coachResponse = new CoachResponse();
                         coachResponse.setCoach_id(rs.getInt("coach_id"));
@@ -158,12 +161,17 @@ public class CoachService {
                         return coachResponse;
                     }
             );
+            int total = jdbcTemplate.queryForObject(countSQL, Integer.class);
+            Map<String, Object> map =  new HashMap<>();
+            map.put("coachs", coachs);
+            map.put("total", total);
+            return map;
         } catch (BadSqlGrammarException e) {
             System.out.println("Sai cú pháp SQL: " + e.getMessage());
-            return Collections.emptyList();
+            return null;
         } catch (DataAccessException e) {
             System.out.println("Lỗi truy cập CSDL: " + e.getMessage());
-            return Collections.emptyList();
+            return null;
         }
     }
 }

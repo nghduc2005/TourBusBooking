@@ -17,7 +17,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -111,13 +113,16 @@ public class TripService {
             return 0;
         }
     }
-    public List<TripResponse>  getAllTrip() {
+    public Map<String, Object> getAllTrip(int current, int pageSize) {
         String sql = "SELECT t.trip_id, t.start_location, t.end_location, t.start_time, t.price, t.status, t" +
+                ".coach_id, c.coach_type, c.total_seat FROM trips t JOIN coachs c ON t.coach_id = c.coach_id limit ?" +
+                " offset ?";
+        String countSQL = "SELECT t.trip_id, t.start_location, t.end_location, t.start_time, t.price, t.status, t" +
                 ".coach_id, c.coach_type, c.total_seat FROM trips t JOIN coachs c ON t.coach_id = c.coach_id";
         try{
-            return jdbcTemplate.query(
+            List<TripResponse> tripsList = jdbcTemplate.query(
                     sql,
-                    new Object[]{},
+                    new Object[]{pageSize, (current-1)*pageSize},
                     (rs, rowNum) -> {
                         TripResponse tripResponse = new TripResponse();
                         Timestamp timestamp = rs.getTimestamp("start_time");
@@ -134,12 +139,17 @@ public class TripService {
                         return tripResponse;
                     }
             );
+            int total = jdbcTemplate.queryForObject(countSQL, Integer.class);
+            Map<String, Object> map = new HashMap<>();
+            map.put("trips", tripsList);
+            map.put("total", total);
+            return map;
         } catch (BadSqlGrammarException e) {
             System.out.println("Sai cú pháp SQL: " + e.getMessage());
-            return Collections.emptyList();
+            return null;
         } catch (DataAccessException e) {
             System.out.println("Lỗi truy cập CSDL: " + e.getMessage());
-            return Collections.emptyList();
+            return null;
         }
     }
 }

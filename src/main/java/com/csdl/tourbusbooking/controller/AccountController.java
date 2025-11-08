@@ -9,9 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping
+@RequestMapping("/accounts")
 public class AccountController {
     @Autowired
     private AccountService accountService;
@@ -37,7 +38,9 @@ public class AccountController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Mật khẩu không chính xác!");
         }
         session.setAttribute("account", account.getUsername());
-        return ResponseEntity.status(HttpStatus.OK).body("Login thành công!"); //tự gắn sessionId vào res qua cookie
+        session.setAttribute("role", account.getRole());
+        LoginResponse response = new LoginResponse(account, "Login thành công!");
+        return ResponseEntity.status(HttpStatus.OK).body(response); //tự gắn sessionId vào res qua cookie
     }
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpSession session) {
@@ -133,9 +136,10 @@ public class AccountController {
         }
     }
     @GetMapping
-    public ResponseEntity<?> getAllAccounts(HttpSession session) {
+    public ResponseEntity<?> getAllAccounts(@RequestParam int current, @RequestParam int pageSize,
+                                            HttpSession session) {
         String username = (String) session.getAttribute("account");
-        List<AccountResponse> accountList = accountService.getAllAccounts(username);
-        return ResponseEntity.status(HttpStatus.OK).body(accountList);
+        Map<String, Object> daoResponse = accountService.getAllAccounts(username, current, pageSize);
+        return ResponseEntity.status(HttpStatus.OK).body(daoResponse);
     }
 }

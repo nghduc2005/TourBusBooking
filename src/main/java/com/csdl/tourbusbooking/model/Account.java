@@ -12,5 +12,6 @@ public class Account {
     private String phone;
     private String address;
     private String role;
+    private String note;
     private String[] order_history;
 }

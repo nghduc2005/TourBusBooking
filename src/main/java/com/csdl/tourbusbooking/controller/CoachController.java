@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/vehicles")
@@ -59,8 +60,8 @@ public class CoachController {
         }
     }
     @GetMapping
-    public ResponseEntity<?> getAllCoachs() {
-        List<CoachResponse> coachList = coachService.getAllCoachs();
-        return ResponseEntity.status(HttpStatus.OK).body(coachList);
+    public ResponseEntity<?> getAllCoachs(@RequestParam int current, @RequestParam int pageSize) {
+        Map<String, Object> daoResponse = coachService.getAllCoachs(current, pageSize);
+        return ResponseEntity.status(HttpStatus.OK).body(daoResponse);
     }
 }
