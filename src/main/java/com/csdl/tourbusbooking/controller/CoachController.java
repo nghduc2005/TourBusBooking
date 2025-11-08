@@ -60,7 +60,8 @@ public class CoachController {
         }
     }
     @GetMapping
-    public ResponseEntity<?> getAllCoachs(@RequestParam int current, @RequestParam int pageSize) {
+    public ResponseEntity<?> getAllCoachs(@RequestParam(defaultValue = "1") int current, @RequestParam(defaultValue =
+            "5") int pageSize) {
         Map<String, Object> daoResponse = coachService.getAllCoachs(current, pageSize);
         return ResponseEntity.status(HttpStatus.OK).body(daoResponse);
     }

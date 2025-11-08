@@ -136,7 +136,8 @@ public class AccountController {
         }
     }
     @GetMapping
-    public ResponseEntity<?> getAllAccounts(@RequestParam int current, @RequestParam int pageSize,
+    public ResponseEntity<?> getAllAccounts(@RequestParam(defaultValue = "1") int current, @RequestParam(defaultValue =
+                                                        "5") int pageSize,
                                             HttpSession session) {
         String username = (String) session.getAttribute("account");
         Map<String, Object> daoResponse = accountService.getAllAccounts(username, current, pageSize);

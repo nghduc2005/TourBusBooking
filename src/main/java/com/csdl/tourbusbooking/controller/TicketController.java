@@ -18,16 +18,16 @@ public class TicketController {
     @Autowired
     private TicketService ticketService;
     @GetMapping
-    public ResponseEntity<?> getAllTicket(@RequestParam int current,
-                                                             @RequestParam int pageSize,  HttpSession session) {
+    public ResponseEntity<?> getAllTicket(@RequestParam(defaultValue = "1") int current, @RequestParam(defaultValue =
+            "5") int pageSize,  HttpSession session) {
         String username = (String) session.getAttribute("account");
         String role = (String) session.getAttribute("role");
         Map<String, Object> daoResponse = ticketService.getAllTickets(current, pageSize);
         return ResponseEntity.status(HttpStatus.OK).body(daoResponse);
     }
     @GetMapping("/{id}")
-    public ResponseEntity<?> getAllTickets(@RequestParam int current,
-                                                              @RequestParam int pageSize, @PathVariable String id) {
+    public ResponseEntity<?> getAllTickets(@RequestParam(defaultValue = "1") int current, @RequestParam(defaultValue =
+            "5") int pageSize, @PathVariable String id) {
         Map<String, Object> daoResponse = ticketService.getTicketsById(id, current, pageSize);
         return ResponseEntity.status(HttpStatus.OK).body(daoResponse);
     }

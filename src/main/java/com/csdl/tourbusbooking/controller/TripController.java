@@ -49,7 +49,8 @@ public class TripController {
         }
     }
     @GetMapping
-    public ResponseEntity<?> getAllTrips(@RequestParam int current, @RequestParam int pageSize) {
+    public ResponseEntity<?> getAllTrips(@RequestParam(defaultValue = "1") int current, @RequestParam(defaultValue =
+            "5") int pageSize) {
         Map<String, Object> daoResponse = tripService.getAllTrip(current, pageSize);
         return ResponseEntity.status(HttpStatus.OK).body(daoResponse);
     }
