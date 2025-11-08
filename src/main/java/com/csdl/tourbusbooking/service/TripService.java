@@ -115,10 +115,16 @@ public class TripService {
     }
     public Map<String, Object> getAllTrip(int current, int pageSize) {
         String sql = "SELECT t.trip_id, t.start_location, t.end_location, t.start_time, t.price, t.status, t" +
-                ".coach_id, c.coach_type, c.total_seat FROM trips t JOIN coachs c ON t.coach_id = c.coach_id limit ?" +
+                ".coach_id, c.coach_type, c.total_seat FROM trips t JOIN coachs c ON t.coach_id = c.coach_id order by" +
+                " trip_id" +
+                " " +
+                "limit " +
+                "?" +
                 " offset ?";
-        String countSQL = "SELECT t.trip_id, t.start_location, t.end_location, t.start_time, t.price, t.status, t" +
-                ".coach_id, c.coach_type, c.total_seat FROM trips t JOIN coachs c ON t.coach_id = c.coach_id";
+        String countSQL = "SELECT count(distinct t.trip_id, t.start_location, t.end_location, t.start_time, t.price, " +
+                "t" +
+                ".status, t" +
+                ".coach_id, c.coach_type, c.total_seat) total FROM trips t JOIN coachs c ON t.coach_id = c.coach_id";
         try{
             List<TripResponse> tripsList = jdbcTemplate.query(
                     sql,

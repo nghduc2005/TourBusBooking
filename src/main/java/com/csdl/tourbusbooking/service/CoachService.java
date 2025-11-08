@@ -145,8 +145,9 @@ public class CoachService {
     }
 
     public Map<String, Object>  getAllCoachs(int current, int pageSize) {
-        String sql = "select coach_id, coach_name, coach_type, total_seat, status from coachs limit ? offset ?";
-        String countSQL = "select coach_id, coach_name, coach_type, total_seat, status from coachs";
+        String sql = "select coach_id, coach_name, coach_type, total_seat, status from coachs order by coach_id limit" +
+                " ? offset ?";
+        String countSQL = "select count(*) total from coachs";
         try{
             List<CoachResponse> coachs = jdbcTemplate.query(
                     sql,

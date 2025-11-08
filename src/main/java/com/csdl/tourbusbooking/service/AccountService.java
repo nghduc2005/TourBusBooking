@@ -283,9 +283,10 @@ public class AccountService {
         }
     }
     public  Map<String, Object>  getAllAccounts(String username, int current, int pageSize) {
-        String sql = "select account_id, name, address, phone, username, role from accounts where username != ? " +
+        String sql = "select account_id, name, address, phone, username, role from accounts where username != ? order" +
+                " by account_id " +
                 "limit ? offset ?";
-        String countSQL = "select account_id, name, address, phone, username, role from accounts where username != ?";
+        String countSQL = "select count(*) total from accounts where username != ?";
         try{
             List<AccountResponse> accountList = jdbcTemplate.query(
                     sql,

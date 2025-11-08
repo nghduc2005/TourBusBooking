@@ -42,7 +42,7 @@ public class TicketService {
                 "JOIN coachs c ON t.coach_id = c.coach_id) tc2 ON tc2.trip_id = tk.return_trip_id LEFT JOIN (SELECT " +
                 "ticket_id,trip_id, GROUP_CONCAT(DISTINCT seat_label ORDER BY seat_label ASC SEPARATOR ',') AS " +
                 "ordered_seats FROM booked_seats GROUP BY ticket_id, trip_id) os2 ON tk.ticket_id = os2.ticket_id AND" +
-                " os2.trip_id = tk.return_trip_id limit ? offset ?; ";
+                " os2.trip_id = tk.return_trip_id order by created_time limit ? offset ?; ";
 
         String countSQL = "SELECT  COUNT(DISTINCT tk.ticket_id) AS total FROM tickets tk JOIN accounts a ON tk" +
                 ".account_id = " +
@@ -150,7 +150,7 @@ public class TicketService {
                 "JOIN coachs c ON t.coach_id = c.coach_id) tc2 ON tc2.trip_id = tk.return_trip_id LEFT JOIN (SELECT " +
                 "ticket_id,trip_id, GROUP_CONCAT(DISTINCT seat_label ORDER BY seat_label ASC SEPARATOR ',') AS " +
                 "ordered_seats FROM booked_seats GROUP BY ticket_id, trip_id) os2 ON tk.ticket_id = os2.ticket_id AND" +
-                " os2.trip_id = tk.return_trip_id where a.account_id = ? limit ? offset ?";
+                " os2.trip_id = tk.return_trip_id where a.account_id = ? order by created_time limit ? offset ?";
         String countSQL = "SELECT COUNT(DISTINCT tk.ticket_id) AS total FROM tickets tk JOIN accounts a ON " +
                 "tk.account_id = a.account_id JOIN " +
                 "(SELECT t.trip_id, t.start_location, t.end_location, t.start_time, t.price,c.coach_id, c.coach_name," +
