@@ -14,4 +14,5 @@ public class TripResponse {
     private String coach_type;
     private int coach_id;
     private int total_seat;
+    private String[] ordered_seats;
 }

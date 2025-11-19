@@ -208,7 +208,7 @@ public class AccountService {
                     request.getName(),
                     request.getAddress(),
                     request.getPhone(),
-                    UserConstant.ADMIN_ROLE,
+                    request.getRole(),
                     request.getNote()
             );
             return true;

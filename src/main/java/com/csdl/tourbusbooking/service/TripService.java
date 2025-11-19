@@ -1,6 +1,5 @@
 package com.csdl.tourbusbooking.service;
 
-import com.csdl.tourbusbooking.dto.CoachResponse;
 import com.csdl.tourbusbooking.dto.TripRequest;
 import com.csdl.tourbusbooking.dto.TripResponse;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +50,32 @@ public class TripService {
         }
     }
     public TripResponse getDetailById(String id) {
-        String sql = "select start_location, end_location, start_time, price, coach_id from trips where trip_id= ?";
+        String sql = "SELECT \n" +
+                "    t.trip_id,\n" +
+                "    t.start_location,\n" +
+                "    t.end_location,\n" +
+                "    t.start_time,\n" +
+                "    t.price,\n" +
+                "    t.status,\n" +
+                "    t.coach_id,\n" +
+                "    c.coach_type,\n" +
+                "    c.total_seat,\n" +
+                "    o.ordered_seats\n" +
+                "FROM trips t\n" +
+                "JOIN coachs c \n" +
+                "    ON t.coach_id = c.coach_id\n" +
+                "JOIN (\n" +
+                "    SELECT \n" +
+                "        trip_id,\n" +
+                "        GROUP_CONCAT(\n" +
+                "            DISTINCT seat_label \n" +
+                "            ORDER BY seat_label ASC \n" +
+                "            SEPARATOR ','\n" +
+                "        ) AS ordered_seats\n" +
+                "    FROM booked_seats\n" +
+                "    GROUP BY trip_id\n" +
+                ") o \n" +
+                "    ON t.trip_id = o.trip_id\n" + " where t.trip_id = ?";
         try{
             return jdbcTemplate.queryForObject(
                     sql,
@@ -60,12 +83,18 @@ public class TripService {
                     new RowMapper<TripResponse>() {
                         public TripResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
                             TripResponse trip = new TripResponse();
+                            String[] ordered_seats = rs.getString("ordered_seats").split(",");
                             Timestamp timestamp = rs.getTimestamp("start_time");
                             trip.setStart_location(rs.getString("start_location"));
                             trip.setEnd_location(rs.getString("end_location"));
                             trip.setStart_time(timestamp.toInstant());
                             trip.setPrice(rs.getInt("price"));
                             trip.setCoach_id(rs.getInt("coach_id"));
+                            trip.setStatus(rs.getString("status"));
+                            trip.setCoach_type(rs.getString("coach_type"));
+                            trip.setTotal_seat(rs.getInt("total_seat"));
+                            trip.setOrdered_seats(ordered_seats);
+                            trip.setTrip_id(rs.getInt("trip_id"));
                             return trip;
                         }
                     }
@@ -74,6 +103,73 @@ public class TripService {
             return null; //không tìm thấy
         }
     }
+
+    public TripResponse patchTrip(String id, TripRequest request) {
+        String updateSql =
+                "UPDATE trips t\n" +
+                        "JOIN coachs c ON c.coach_id = t.coach_id\n" +
+                        "SET \n" +
+                        "    t.start_location = ?, \n" +
+                        "    t.end_location   = ?, \n" +
+                        "    t.start_time     = ?, \n" +
+                        "    t.price          = ?, \n" +
+                        "    t.status         = ?,  \n" +
+                        "    t.coach_id       = ?,\n" +
+                        "    c.coach_type     = ?,\n" +
+                        "    c.total_seat     = ?\n" +
+                        "WHERE t.trip_id = ?";
+
+        int rows = jdbcTemplate.update(
+                updateSql,
+                request.getStart_location(),
+                request.getEnd_location(),
+                request.getStart_time(),
+                request.getPrice(),
+                request.getStatus(),
+                request.getCoach_id(),
+                request.getCoach_type(),
+                request.getTotal_seat(),
+                id
+        );
+        if (rows == 0) {
+            return null;
+        }
+        String selectSql =
+                "SELECT t.trip_id, t.start_location, t.end_location, t.start_time, " +
+                        "       t.price, t.status, t.coach_id, c.coach_type, c.total_seat\n" +
+                        "FROM trips t\n" +
+                        "JOIN coachs c ON c.coach_id = t.coach_id\n" +
+                        "WHERE t.trip_id = ?";
+
+        try {
+            return jdbcTemplate.queryForObject(
+                    selectSql,
+                    new Object[]{ request.getTrip_id() },
+                    new RowMapper<TripResponse>() {
+                        @Override
+                        public TripResponse mapRow(ResultSet rs, int rowNum) throws SQLException {
+                            TripResponse trip = new TripResponse();
+                            Timestamp timestamp = rs.getTimestamp("start_time");
+
+                            trip.setTrip_id(rs.getInt("trip_id"));
+                            trip.setStart_location(rs.getString("start_location"));
+                            trip.setEnd_location(rs.getString("end_location"));
+                            trip.setStart_time(timestamp.toInstant());
+                            trip.setPrice(rs.getInt("price"));
+                            trip.setStatus(rs.getString("status"));
+                            trip.setCoach_id(rs.getInt("coach_id"));
+                            trip.setCoach_type(rs.getString("coach_type"));
+                            trip.setTotal_seat(rs.getInt("total_seat"));
+
+                            return trip;
+                        }
+                    }
+            );
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
     public Boolean deleteById(String id) {
         String sql =  "delete from trips where trip_id = ?";
         try{
@@ -114,17 +210,39 @@ public class TripService {
         }
     }
     public Map<String, Object> getAllTrip(int current, int pageSize) {
-        String sql = "SELECT t.trip_id, t.start_location, t.end_location, t.start_time, t.price, t.status, t" +
-                ".coach_id, c.coach_type, c.total_seat FROM trips t JOIN coachs c ON t.coach_id = c.coach_id order by" +
-                " trip_id" +
-                " " +
-                "limit " +
-                "?" +
-                " offset ?";
+        String sql = "SELECT \n" +
+                "    t.trip_id,\n" +
+                "    t.start_location,\n" +
+                "    t.end_location,\n" +
+                "    t.start_time,\n" +
+                "    t.price,\n" +
+                "    t.status,\n" +
+                "    t.coach_id,\n" +
+                "    c.coach_type,\n" +
+                "    c.total_seat,\n" +
+                "    o.ordered_seats\n" +
+                "FROM trips t\n" +
+                "JOIN coachs c \n" +
+                "    ON t.coach_id = c.coach_id\n" +
+                "JOIN (\n" +
+                "    SELECT \n" +
+                "        trip_id,\n" +
+                "        GROUP_CONCAT(\n" +
+                "            DISTINCT seat_label \n" +
+                "            ORDER BY seat_label ASC \n" +
+                "            SEPARATOR ','\n" +
+                "        ) AS ordered_seats\n" +
+                "    FROM booked_seats\n" +
+                "    GROUP BY trip_id\n" +
+                ") o \n" +
+                "    ON t.trip_id = o.trip_id\n" +
+                "ORDER BY t.trip_id\n" +
+                "LIMIT ? OFFSET ?;\n";
         String countSQL = "SELECT count(distinct t.trip_id, t.start_location, t.end_location, t.start_time, t.price, " +
                 "t" +
                 ".status, t" +
                 ".coach_id, c.coach_type, c.total_seat) total FROM trips t JOIN coachs c ON t.coach_id = c.coach_id";
+        String orderedSQL = "";
         try{
             List<TripResponse> tripsList = jdbcTemplate.query(
                     sql,
@@ -132,6 +250,7 @@ public class TripService {
                     (rs, rowNum) -> {
                         TripResponse tripResponse = new TripResponse();
                         Timestamp timestamp = rs.getTimestamp("start_time");
+                        String[] ordered_seats = rs.getString("ordered_seats").split(",");
                         tripResponse.setTrip_id(rs.getInt("trip_id"));
                         tripResponse.setStart_location(rs.getString("start_location"));
                         tripResponse.setEnd_location(rs.getString("end_location"));
@@ -142,6 +261,7 @@ public class TripService {
                         tripResponse.setCoach_id(rs.getInt("coach_id"));
                         tripResponse.setCoach_type(rs.getString("coach_type"));
                         tripResponse.setTotal_seat(rs.getInt("total_seat"));
+                        tripResponse.setOrdered_seats(ordered_seats);
                         return tripResponse;
                     }
             );

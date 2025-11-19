@@ -17,9 +17,9 @@ public class TripController {
     @PostMapping("/create")
     public ResponseEntity<?> createTrip(@RequestBody TripRequest request) {
         if(tripService.create(request)) {
-            return ResponseEntity.status(HttpStatus.OK).body("Tạo xe thành công!");
+            return ResponseEntity.status(HttpStatus.OK).body("Tạo chuyến đi thành công!");
         }
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body("Tạo xe thất bại!");
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body("Tạo chuyến đi thất bại!");
     }
     @GetMapping("/edit/{id}")
     public ResponseEntity<?> getTripDetail(@PathVariable String id) {
@@ -28,6 +28,15 @@ public class TripController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy thông tin chuyến đi!");
         }
         return ResponseEntity.status(HttpStatus.OK).body(trip);
+    }
+    @PatchMapping("/edit/{id}")
+    public ResponseEntity<?> updateTrip(@PathVariable String id, @RequestBody TripRequest request) {
+        TripResponse trip = tripService.patchTrip(id, request);
+        if(trip != null) {
+            return ResponseEntity.status(HttpStatus.OK).body("Thay đổi thông tin thành công!");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body("Thay đổi thông tin thất bại!");
+        }
     }
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteById(@PathVariable String id) {
