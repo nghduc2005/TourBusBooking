@@ -1,29 +1,10 @@
-package com.csdl.tourbusbooking.dto;
+package com.csdl.tourbusbooking.model;
 
-import lombok.Data;
-<<<<<<< HEAD
-=======
 import java.time.Instant;
 import java.util.List;
 
-import com.csdl.tourbusbooking.dto.TicketRequest.Leg;
->>>>>>> 3cbf7df (Merge TourBusBooking project)
+public class TicketResponse {
 
-import java.time.Instant;
-@Data
-public class TripResponse {
-    private int trip_id;
-    private String start_location;
-    private String end_location;
-    private Instant start_time;
-    private int price;
-    private String status;
-    private String coach_type;
-    private int coach_id;
-    private int total_seat;
-    private String[] ordered_seats;
-<<<<<<< HEAD
-=======
     private Integer ticket_id;
     private String account_id;
     private String name;
@@ -33,11 +14,14 @@ public class TripResponse {
     private String payment_status;
     private Instant created_time;
     private String note;
+    private String start_location;
+    private String end_location;
     private Long total_price;
 
     private Leg outbound;
     private Leg returnTrip; // đổi tên
-        public Integer getTicket_id() {
+
+    public Integer getTicket_id() {
         return ticket_id;
     }
 
@@ -206,5 +190,4 @@ public class TripResponse {
             this.price = price;
         }
     }
->>>>>>> 3cbf7df (Merge TourBusBooking project)
 }
