@@ -1,6 +1,4 @@
 package com.csdl.tourbusbooking.repository;
-<<<<<<< HEAD
-=======
 
 import java.util.List;
 import java.util.Map;
@@ -15,4 +13,3 @@ public interface TripRepository {
 
 
 }
->>>>>>> 3cbf7df (Merge TourBusBooking project)

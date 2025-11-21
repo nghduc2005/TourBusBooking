@@ -1,13 +1,10 @@
 package com.csdl.tourbusbooking.dto;
 
 import lombok.Data;
-<<<<<<< HEAD
-=======
 import java.time.Instant;
 import java.util.List;
 
 import com.csdl.tourbusbooking.dto.TicketRequest.Leg;
->>>>>>> 3cbf7df (Merge TourBusBooking project)
 
 import java.time.Instant;
 @Data
@@ -22,8 +19,6 @@ public class TripResponse {
     private int coach_id;
     private int total_seat;
     private String[] ordered_seats;
-<<<<<<< HEAD
-=======
     private Integer ticket_id;
     private String account_id;
     private String name;
@@ -206,5 +201,4 @@ public class TripResponse {
             this.price = price;
         }
     }
->>>>>>> 3cbf7df (Merge TourBusBooking project)
 }

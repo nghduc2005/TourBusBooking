@@ -19,10 +19,6 @@ import static com.fasterxml.jackson.databind.type.LogicalType.Map;
 
 @Service
 @RequiredArgsConstructor
-<<<<<<< HEAD
-=======
-
->>>>>>> 3cbf7df (Merge TourBusBooking project)
 public class TicketService {
 
     @Autowired
