@@ -3,6 +3,9 @@ package com.csdl.tourbusbooking.repository.impl;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.*;
 
 import org.springframework.stereotype.Repository;
@@ -15,30 +18,40 @@ import com.csdl.tourbusbooking.util.DBUtil;
 @Repository
 public class TripRepositoryImpl implements TripRepository {
 
+    // =============================
+    // Convert Instant → yyyy-MM-dd
+    // =============================
+    private String formatInstantToDate(Instant instant) {
+        if (instant == null) return null;
+        return LocalDate.ofInstant(instant, ZoneOffset.UTC).toString(); // yyyy-MM-dd
+    }
 
-    // ==============================================
+    // =============================
     // TÌM MỘT CHIỀU
-    // ==============================================
-    private List<TripEntity> findOneWay(String start, String end, String date) {
+    // =============================
+    private List<TripEntity> findOneWay(String start, String end, Instant date) {
 
         List<TripEntity> result = new ArrayList<>();
 
         String sql =
-            "SELECT t.trip_id, t.start_location, t.end_location, t.start_time, "
-          + "t.price, t.status, c.coach_type, c.coach_id, c.total_seat "
-          + "FROM trips t "
-          + "JOIN coachs c ON t.coach_id = c.coach_id "
-          + "WHERE t.start_location LIKE ? "
-          + "AND t.end_location LIKE ? "
-          + "AND DATE(t.start_time) = ? "
-          + "ORDER BY t.start_time ASC";
+            "SELECT t.trip_id, t.start_location, t.end_location, t.start_time, " +
+            "t.price, t.status, c.coach_type, c.coach_id, c.total_seat " +
+            "FROM trips t " +
+            "JOIN coachs c ON t.coach_id = c.coach_id " +
+            "WHERE t.start_location LIKE ? " +
+            "AND t.end_location LIKE ? " +
+            "AND DATE(t.start_time) = ? " +
+            "ORDER BY t.start_time ASC";
 
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, "%" + start + "%");
             stmt.setString(2, "%" + end + "%");
-            stmt.setString(3, date);
+
+            // Convert Instant → yyyy-MM-dd
+            String dateOnly = formatInstantToDate(date);
+            stmt.setString(3, dateOnly);
 
             ResultSet rs = stmt.executeQuery();
 
@@ -54,24 +67,22 @@ public class TripRepositoryImpl implements TripRepository {
                 e.setCoach_id(rs.getInt("coach_id"));
                 e.setTotal_seat(rs.getInt("total_seat"));
 
-                // lấy danh sách ghế đã đặt
+                // Ghế đã đặt
                 e.setOrdered_seat(findBookedSeats(e.getTrip_id()));
 
                 result.add(e);
             }
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error finding trips", e);
         }
 
         return result;
     }
 
-
-
-    // ==============================================
-    //  MỘT CHIỀU 
-    // ==============================================
+    // =============================
+    // MỘT CHIỀU API
+    // =============================
     @Override
     public List<TripEntity> findAll(TripSearchRequest req) {
         return findOneWay(
@@ -81,24 +92,19 @@ public class TripRepositoryImpl implements TripRepository {
         );
     }
 
-
-    // ==============================================
+    // =============================
     // KHỨ HỒI
-    // ==============================================
+    // =============================
     @Override
     public Map<String, List<TripEntity>> findRoundTrip(TripSearchRequest req) {
 
         Map<String, List<TripEntity>> result = new HashMap<>();
 
         List<TripEntity> depart =
-            findOneWay(req.getStart_location(),
-                       req.getEnd_location(),
-                       req.getStart_date());
+            findOneWay(req.getStart_location(), req.getEnd_location(), req.getStart_date());
 
         List<TripEntity> ret =
-            findOneWay(req.getEnd_location(),
-                       req.getStart_location(),
-                       req.getEnd_date());
+            findOneWay(req.getEnd_location(), req.getStart_location(), req.getEnd_date());
 
         result.put("depart_trips", depart);
         result.put("return_trips", ret);
@@ -106,9 +112,9 @@ public class TripRepositoryImpl implements TripRepository {
         return result;
     }
 
-    // ==============================================
+    // =============================
     // GHẾ ĐÃ ĐẶT
-    // ==============================================
+    // =============================
     @Override
     public List<String> findBookedSeats(Integer tripId) {
         List<String> result = new ArrayList<>();
