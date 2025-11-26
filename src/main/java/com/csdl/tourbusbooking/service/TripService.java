@@ -224,7 +224,7 @@ public class TripService {
                 "FROM trips t\n" +
                 "JOIN coachs c \n" +
                 "    ON t.coach_id = c.coach_id\n" +
-                "JOIN (\n" +
+                "LEFT JOIN (\n" +
                 "    SELECT \n" +
                 "        trip_id,\n" +
                 "        GROUP_CONCAT(\n" +
@@ -250,7 +250,8 @@ public class TripService {
                     (rs, rowNum) -> {
                         TripResponse tripResponse = new TripResponse();
                         Timestamp timestamp = rs.getTimestamp("start_time");
-                        String[] ordered_seats = rs.getString("ordered_seats").split(",");
+                        String[] ordered_seats = rs.getString("ordered_seats")==null ? null : rs.getString(
+                                "ordered_seats").split(",");
                         tripResponse.setTrip_id(rs.getInt("trip_id"));
                         tripResponse.setStart_location(rs.getString("start_location"));
                         tripResponse.setEnd_location(rs.getString("end_location"));
