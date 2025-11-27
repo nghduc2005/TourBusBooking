@@ -12,7 +12,7 @@ public class TicketAPI {
 
     private TicketServiceImpl service = new TicketServiceImpl();
 
-    @PostMapping("/tickets")
+    @PostMapping("/booking-history")
     public TicketResponse createTicket(@RequestBody TicketRequest req) {
         return service.create(req);
     }
